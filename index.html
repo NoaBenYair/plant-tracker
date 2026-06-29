@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2e7d52">
+<title>🌿 הצמחים שלי</title>
+<style>
+  :root{
+    --green:#2e7d52;
+    --green-light:#e7f3ec;
+    --green-mid:#56a878;
+    --bg:#f4f8f5;
+    --card:#ffffff;
+    --text:#1f3329;
+    --muted:#6b8479;
+    --danger:#c0563f;
+    --warn:#d99a2b;
+    --shadow:0 2px 10px rgba(46,125,82,.10);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Heebo",Arial,sans-serif;
+    background:var(--bg);color:var(--text);
+    padding-bottom:80px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--green),var(--green-mid));
+    color:#fff;padding:18px 16px 14px;text-align:center;
+    position:sticky;top:0;z-index:10;box-shadow:var(--shadow);
+  }
+  header h1{margin:0;font-size:22px;font-weight:700;}
+  header p{margin:4px 0 0;font-size:13px;opacity:.9;}
+
+  .container{max-width:560px;margin:0 auto;padding:14px;}
+
+  /* Tabs */
+  .tabbar{
+    position:fixed;bottom:0;right:0;left:0;background:var(--card);
+    display:flex;border-top:1px solid #e3ece6;z-index:20;
+    box-shadow:0 -2px 10px rgba(0,0,0,.05);
+  }
+  .tabbar button{
+    flex:1;border:0;background:none;padding:10px 4px 14px;
+    font-size:12px;color:var(--muted);font-weight:600;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-family:inherit;
+  }
+  .tabbar button .ic{font-size:22px;}
+  .tabbar button.active{color:var(--green);}
+
+  .tab{display:none;}
+  .tab.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  /* Plant card */
+  .card{
+    background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+    margin-bottom:14px;overflow:hidden;
+  }
+  .card-photo{
+    width:100%;height:170px;object-fit:cover;display:block;background:var(--green-light);
+  }
+  .photo-placeholder{
+    width:100%;height:120px;display:flex;align-items:center;justify-content:center;
+    background:var(--green-light);font-size:46px;cursor:pointer;flex-direction:column;gap:4px;
+  }
+  .photo-placeholder small{font-size:12px;color:var(--green);font-weight:600;}
+  .card-body{padding:14px 16px 16px;}
+  .card-body h2{margin:0;font-size:19px;}
+  .eng{color:var(--muted);font-size:13px;margin:2px 0 10px;font-style:italic;}
+  .row{display:flex;gap:8px;margin:8px 0;align-items:flex-start;font-size:14px;line-height:1.5;}
+  .badge{
+    display:inline-block;background:var(--green-light);color:var(--green);
+    padding:4px 10px;border-radius:20px;font-size:13px;font-weight:600;
+  }
+  .status{
+    margin-top:12px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .status.ok{background:#e7f6ec;color:#1f7a44;}
+  .status.soon{background:#fdf4e1;color:#a9781a;}
+  .status.due{background:#fbe9e4;color:#b0432c;}
+  .btn{
+    border:0;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;
+    cursor:pointer;font-family:inherit;background:var(--green);color:#fff;
+    transition:transform .08s;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn.water{width:100%;margin-top:10px;font-size:15px;padding:13px;}
+  .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--green-light);}
+  .btn.small{padding:7px 12px;font-size:13px;}
+
+  .change-photo{
+    position:absolute;margin-top:-38px;margin-right:10px;background:rgba(0,0,0,.45);
+    color:#fff;border:0;border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;
+    cursor:pointer;font-family:inherit;backdrop-filter:blur(3px);
+  }
+
+  /* Tracking tab */
+  .track-card{
+    background:var(--card);border-radius:16px;box-shadow:var(--shadow);
+    padding:14px 16px;margin-bottom:14px;
+  }
+  .track-head{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .track-head h3{margin:0;font-size:17px;}
+  .track-head .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .progress{height:8px;border-radius:8px;background:#eef3f0;overflow:hidden;margin:12px 0 6px;}
+  .progress > span{display:block;height:100%;border-radius:8px;background:var(--green-mid);transition:width .4s;}
+  .history{margin-top:12px;}
+  .history h4{margin:0 0 6px;font-size:13px;color:var(--muted);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{
+    background:var(--green-light);color:var(--green);border-radius:8px;
+    padding:5px 9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;
+  }
+  .chip button{border:0;background:none;color:var(--danger);font-weight:800;cursor:pointer;font-size:14px;line-height:1;padding:0;}
+  .empty{color:var(--muted);font-size:13px;font-style:italic;}
+
+  .add-date{display:flex;gap:8px;margin-top:10px;}
+  .add-date input{
+    flex:1;border:1.5px solid #e3ece6;border-radius:10px;padding:9px;font-size:14px;font-family:inherit;
+  }
+  .summary{
+    background:linear-gradient(135deg,var(--green),var(--green-mid));color:#fff;
+    border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+    display:flex;justify-content:space-around;text-align:center;
+  }
+  .summary .num{font-size:24px;font-weight:800;}
+  .summary .lbl{font-size:12px;opacity:.9;margin-top:2px;}
+  .toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;gap:8px;}
+  .toast{
+    position:fixed;bottom:90px;right:50%;transform:translateX(50%);
+    background:var(--text);color:#fff;padding:10px 18px;border-radius:20px;
+    font-size:14px;font-weight:600;z-index:50;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(50%) translateY(-6px);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 הצמחים שלי</h1>
+  <p>מעקב השקיה וטיפים</p>
+</header>
+
+<div class="container">
+  <!-- ===== TAB 1: PLANTS ===== -->
+  <div id="tab-plants" class="tab active"></div>
+
+  <!-- ===== TAB 2: TRACKING ===== -->
+  <div id="tab-track" class="tab">
+    <div class="summary" id="summary"></div>
+    <div id="track-list"></div>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <button id="btn-plants" class="active" onclick="switchTab('plants')">
+    <span class="ic">🪴</span><span>הצמחים</span>
+  </button>
+  <button id="btn-track" onclick="switchTab('track')">
+    <span class="ic">💧</span><span>השקיות</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- default data ---------- */
+const defaultPlants = [
+    {
+        id: 1,
+        name: "דרצנה דרדו",
+        englishName: "Dracaena Dorado",
+        interval: 10,
+        lastWatered: "2026-06-20",
+        light: "☀️ אור חזק לא ישיר",
+        tips: "💧 להשקות עד נגירה ולרוקן את התחתית. רגיש לעודף מים."
+    },
+    {
+        id: 2,
+        name: "אקבריה (סוקולנט)",
+        englishName: "Echeveria",
+        interval: 14,
+        lastWatered: "2026-06-20",
+        light: "☀️ שמש ישירה או אור חזק מאוד",
+        tips: "🌵 העלים אוגרים מים. להשקות רק כשהאדמה יבשה לחלוטין!"
+    },
+    {
+        id: 3,
+        name: "פירמיאנה קולורטה (קאודקס)",
+        englishName: "Firmiana Colorata",
+        interval: 12,
+        lastWatered: "2026-06-20",
+        light: "⛅ אור בהיר וחזק, שמש מתונה",
+        tips: "🪵 הגזע המפותל אוגר מים. להשקות רק כשהאדמה יבשה לגמרי."
+    },
+    {
+        id: 4,
+        name: "אלוקסיה ריגל שילדס",
+        englishName: "Alocasia Regal Shields",
+        interval: 7,
+        lastWatered: "2026-06-20",
+        light: "⛅ אור חזק, ללא שמש ישירה",
+        tips: "💧 אוהב לחות. לשמור על אדמה לחה קלות ולא לתת לה להתייבש לחלוטין."
+    }
+];
+
+const STORE_KEY = "myPlants_v1";
+
+/* ---------- state load/save ---------- */
+function loadPlants(){
+  const raw = localStorage.getItem(STORE_KEY);
+  if(!raw){
+    // initialize: seed wateredDates with the lastWatered date
+    const seeded = defaultPlants.map(p => ({
+      ...p,
+      photo: null,
+      wateredDates: p.lastWatered ? [p.lastWatered] : []
+    }));
+    save(seeded);
+    return seeded;
+  }
+  try{
+    const parsed = JSON.parse(raw);
+    // make sure every plant has the fields we need
+    return parsed.map(p => ({
+      photo:null, wateredDates:[], ...p,
+      wateredDates: p.wateredDates || (p.lastWatered ? [p.lastWatered] : [])
+    }));
+  }catch(e){
+    console.error(e); return [];
+  }
+}
+function save(arr){
+  plants = arr;
+  localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+}
+
+let plants = [];
+plants = loadPlants();
+
+/* ---------- date helpers ---------- */
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function daysBetween(aISO,bISO){
+  const a=new Date(aISO+"T00:00:00"), b=new Date(bISO+"T00:00:00");
+  return Math.round((b-a)/86400000);
+}
+function lastWateredOf(p){
+  if(!p.wateredDates || !p.wateredDates.length) return null;
+  return [...p.wateredDates].sort().slice(-1)[0];
+}
+function formatHe(iso){
+  if(!iso) return "—";
+  const [y,m,d]=iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function statusOf(p){
+  const last = lastWateredOf(p);
+  if(!last) return {cls:"due", text:"לא הושקה עדיין 🚱", daysLeft:null};
+  const elapsed = daysBetween(last, todayISO());
+  const left = p.interval - elapsed;
+  if(left > 2) return {cls:"ok", text:`✅ עוד ${left} ימים להשקיה`, daysLeft:left};
+  if(left >= 0) return {cls:"soon", text: left===0 ? "💧 להשקות היום!" : `⏳ עוד ${left} ימים`, daysLeft:left};
+  return {cls:"due", text:`🚨 באיחור של ${Math.abs(left)} ימים`, daysLeft:left};
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ---------- render: plants tab ---------- */
+function renderPlants(){
+  const wrap=document.getElementById("tab-plants");
+  wrap.innerHTML="";
+  plants.forEach(p=>{
+    const st=statusOf(p);
+    const card=document.createElement("div");
+    card.className="card";
+
+    const photoHTML = p.photo
+      ? `<img class="card-photo" src="${p.photo}" alt="">
+         <button class="change-photo" onclick="pickPhoto(${p.id})">📷 החלפת תמונה</button>`
+      : `<div class="photo-placeholder" onclick="pickPhoto(${p.id})">🪴<small>הוספת תמונה</small></div>`;
+
+    card.innerHTML = `
+      ${photoHTML}
+      <div class="card-body">
+        <h2>${p.name}</h2>
+        <div class="eng">${p.englishName||""}</div>
+        <div class="row">☀️ <div><b>אור:</b> ${p.light||"—"}</div></div>
+        <div class="row">📝 <div>${p.tips||""}</div></div>
+        <div class="row">🔁 <div><b>תדירות:</b> כל <span class="badge">${p.interval} ימים</span></div></div>
+        <div class="row">🗓️ <div><b>הושקה לאחרונה:</b> ${formatHe(lastWateredOf(p))}</div></div>
+        <div class="status ${st.cls}"><span>${st.text}</span></div>
+        <button class="btn water" onclick="waterToday(${p.id})">💧 השקיתי היום</button>
+      </div>`;
+    wrap.appendChild(card);
+  });
+
+  // hidden file input for photos
+  if(!document.getElementById("photoInput")){
+    const inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*"; inp.id="photoInput"; inp.style.display="none";
+    document.body.appendChild(inp);
+  }
+}
+
+/* ---------- render: tracking tab ---------- */
+function renderTrack(){
+  const list=document.getElementById("track-list");
+  list.innerHTML="";
+
+  // summary numbers
+  const total=plants.length;
+  const dueCount=plants.filter(p=>{const s=statusOf(p);return s.daysLeft!==null && s.daysLeft<=0;}).length;
+  const totalWaterings=plants.reduce((s,p)=>s+(p.wateredDates?p.wateredDates.length:0),0);
+  document.getElementById("summary").innerHTML=`
+    <div><div class="num">${total}</div><div class="lbl">צמחים</div></div>
+    <div><div class="num">${dueCount}</div><div class="lbl">צריכים מים</div></div>
+    <div><div class="num">${totalWaterings}</div><div class="lbl">סה״כ השקיות</div></div>`;
+
+  plants.forEach(p=>{
+    const st=statusOf(p);
+    const last=lastWateredOf(p);
+    const elapsed = last ? daysBetween(last, todayISO()) : null;
+    const pct = elapsed===null ? 0 : Math.max(0,Math.min(100, Math.round((elapsed/p.interval)*100)));
+    const dates=[...(p.wateredDates||[])].sort().reverse();
+
+    const chips = dates.length
+      ? dates.map(d=>`<span class="chip">${formatHe(d)} <button onclick="removeDate(${p.id},'${d}')">✕</button></span>`).join("")
+      : `<span class="empty">עדיין אין השקיות רשומות</span>`;
+
+    const c=document.createElement("div");
+    c.className="track-card";
+    c.innerHTML=`
+      <div class="track-head">
+        <div>
+          <h3>${p.name}</h3>
+          <div class="sub">${st.text}</div>
+        </div>
+        <button class="btn small" onclick="waterToday(${p.id})">💧 היום</button>
+      </div>
+      <div class="progress"><span style="width:${pct}%;background:${st.cls==='due'?'#c0563f':st.cls==='soon'?'#d99a2b':'#56a878'}"></span></div>
+      <div class="history">
+        <h4>היסטוריית השקיה (${dates.length})</h4>
+        <div class="chips">${chips}</div>
+        <div class="add-date">
+          <input type="date" id="date-${p.id}" max="${todayISO()}" value="${todayISO()}">
+          <button class="btn ghost small" onclick="addCustomDate(${p.id})">+ הוספה</button>
+        </div>
+      </div>`;
+    list.appendChild(c);
+  });
+}
+
+/* ---------- actions ---------- */
+function waterToday(id){
+  const p=plants.find(x=>x.id===id);
+  const t=todayISO();
+  if(p.wateredDates.includes(t)){ toast("כבר רשום שהשקית היום 🙂"); return; }
+  p.wateredDates.push(t);
+  p.lastWatered=t;
+  save(plants); renderAll();
+  toast("💧 נרשמה השקיה להיום!");
+}
+function addCustomDate(id){
+  const p=plants.find(x=>x.id===id);
+  const val=document.getElementById("date-"+id).value;
+  if(!val) return;
+  if(p.wateredDates.includes(val)){ toast("התאריך כבר קיים"); return; }
+  p.wateredDates.push(val);
+  p.lastWatered=lastWateredOf(p);
+  save(plants); renderAll();
+  toast("נוסף ✓");
+}
+function removeDate(id,d){
+  const p=plants.find(x=>x.id===id);
+  p.wateredDates=p.wateredDates.filter(x=>x!==d);
+  p.lastWatered=lastWateredOf(p);
+  save(plants); renderAll();
+}
+function pickPhoto(id){
+  const inp=document.getElementById("photoInput");
+  inp.onchange=()=>{
+    const file=inp.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      // downscale to keep localStorage small
+      const img=new Image();
+      img.onload=()=>{
+        const max=800;
+        let {width,height}=img;
+        if(width>max){height=height*max/width;width=max;}
+        const canvas=document.createElement("canvas");
+        canvas.width=width;canvas.height=height;
+        canvas.getContext("2d").drawImage(img,0,0,width,height);
+        const p=plants.find(x=>x.id===id);
+        try{
+          p.photo=canvas.toDataURL("image/jpeg",0.8);
+          save(plants); renderAll(); toast("התמונה נשמרה 📷");
+        }catch(err){ toast("התמונה גדולה מדי"); }
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+    inp.value="";
+  };
+  inp.click();
+}
+
+/* ---------- tabs + render ---------- */
+function switchTab(name){
+  document.getElementById("tab-plants").classList.toggle("active",name==="plants");
+  document.getElementById("tab-track").classList.toggle("active",name==="track");
+  document.getElementById("btn-plants").classList.toggle("active",name==="plants");
+  document.getElementById("btn-track").classList.toggle("active",name==="track");
+  window.scrollTo(0,0);
+}
+function renderAll(){ renderPlants(); renderTrack(); }
+renderAll();
+</script>
+</body>
+</html>
