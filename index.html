@@ -95,6 +95,37 @@
   .add-date{display:flex;gap:8px;margin-top:10px;}
   .add-date input{flex:1;border:1.5px solid #e3ece6;border-radius:10px;padding:9px;font-size:14px;font-family:inherit;}
 
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .trash{border:0;background:none;cursor:pointer;font-size:18px;line-height:1;padding:4px;opacity:.55;}
+  .trash:active{opacity:1;}
+
+  /* top add button */
+  .add-bar{margin-bottom:14px;}
+  .btn.add{width:100%;padding:14px;font-size:15px;}
+
+  /* modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,40,30,.45);z-index:60;
+    display:none;align-items:flex-end;justify-content:center;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;
+    animation:slideup .25s ease;
+  }
+  @keyframes slideup{from{transform:translateY(100%);}to{transform:none;}}
+  .modal h3{margin:0 0 14px;font-size:18px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:5px;}
+  .field input,.field textarea{
+    width:100%;border:1.5px solid #e3ece6;border-radius:10px;padding:10px;font-size:15px;
+    font-family:inherit;background:#fff;color:var(--text);
+  }
+  .field textarea{resize:vertical;min-height:60px;}
+  .modal-actions{display:flex;gap:10px;margin-top:8px;}
+  .modal-actions .btn{flex:1;}
+
   .toast{
     position:fixed;bottom:24px;right:50%;transform:translateX(50%);
     background:var(--text);color:#fff;padding:10px 18px;border-radius:20px;
@@ -112,7 +143,24 @@
 </header>
 
 <div class="container">
+  <div class="add-bar"><button class="btn add" onclick="openModal()">➕ הוספת צמח</button></div>
   <div id="list"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">הוספת צמח חדש</h3>
+    <input type="hidden" id="f-id">
+    <div class="field"><label>שם הצמח *</label><input id="f-name" placeholder="לדוגמה: מונסטרה"></div>
+    <div class="field"><label>שם באנגלית</label><input id="f-eng" placeholder="Monstera Deliciosa"></div>
+    <div class="field"><label>תאורה</label><input id="f-light" placeholder="⛅ אור חזק, ללא שמש ישירה"></div>
+    <div class="field"><label>טיפים לטיפול</label><textarea id="f-tips" placeholder="💧 כמה להשקות, רגישויות..."></textarea></div>
+    <div class="field"><label>תדירות השקיה (כל כמה ימים) *</label><input id="f-interval" type="number" min="1" value="7"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn" onclick="saveModal()">שמירה</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -215,8 +263,10 @@ function render(){
     card.innerHTML = `
       ${photoHTML}
       <div class="card-body">
-        <h2>${p.name}</h2>
-        <div class="eng">${p.englishName||""}</div>
+        <div class="card-head">
+          <div><h2>${p.name}</h2><div class="eng">${p.englishName||""}</div></div>
+          <button class="trash" title="מחיקה" onclick="deletePlant(${p.id})">🗑️</button>
+        </div>
         <div class="row">☀️ <div><b>אור:</b> ${p.light||"—"}</div></div>
         <div class="row">📝 <div>${p.tips||""}</div></div>
         <div class="row">🔁 <div><b>תדירות:</b> כל <span class="badge">${p.interval} ימים</span></div></div>
@@ -224,6 +274,7 @@ function render(){
         <div class="progress"><span style="width:${pct}%;background:${barColor}"></span></div>
         <div class="status ${st.cls}">${st.text}</div>
         <button class="btn water" onclick="waterToday(${p.id})">💧 השקיתי היום</button>
+        <button class="btn ghost water" onclick="addReminder(${p.id})">📅 תזכורת חוזרת ליומן</button>
         <div class="history">
           <h4>היסטוריית השקיה (${dates.length})</h4>
           <div class="chips">${chips}</div>
@@ -291,6 +342,78 @@ function pickPhoto(id){
     inp.value="";
   };
   inp.click();
+}
+
+/* ---------- add / delete plants ---------- */
+function openModal(){
+  document.getElementById("modalTitle").textContent="הוספת צמח חדש";
+  document.getElementById("f-id").value="";
+  document.getElementById("f-name").value="";
+  document.getElementById("f-eng").value="";
+  document.getElementById("f-light").value="";
+  document.getElementById("f-tips").value="";
+  document.getElementById("f-interval").value="7";
+  document.getElementById("overlay").classList.add("show");
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("show"); }
+function saveModal(){
+  const name=document.getElementById("f-name").value.trim();
+  const interval=parseInt(document.getElementById("f-interval").value,10);
+  if(!name){ toast("צריך שם לצמח"); return; }
+  if(!interval || interval<1){ toast("תדירות לא תקינה"); return; }
+  const newId = (plants.reduce((m,p)=>Math.max(m,p.id),0)||0)+1;
+  plants.push({
+    id:newId, name, englishName:document.getElementById("f-eng").value.trim(),
+    light:document.getElementById("f-light").value.trim(),
+    tips:document.getElementById("f-tips").value.trim(),
+    interval, photo:null, wateredDates:[], lastWatered:null
+  });
+  save(); closeModal(); render(); toast("הצמח נוסף 🌱");
+}
+function deletePlant(id){
+  const p=plants.find(x=>x.id===id);
+  if(!confirm(`למחוק את "${p.name}"? פעולה זו אינה הפיכה.`)) return;
+  plants=plants.filter(x=>x.id!==id);
+  save(); render(); toast("נמחק");
+}
+
+/* ---------- calendar reminder (.ics) ---------- */
+function nextDueISO(p){
+  const last=lastWateredOf(p);
+  let next = last ? new Date(last+"T09:00:00") : new Date();
+  if(last){
+    // roll forward by interval until the date is today or in the future
+    const today=new Date(todayISO()+"T00:00:00");
+    while(next < today){ next.setDate(next.getDate()+p.interval); }
+  }
+  return next;
+}
+function pad(n){return String(n).padStart(2,"0");}
+function icsStamp(d){
+  return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00";
+}
+function addReminder(id){
+  const p=plants.find(x=>x.id===id);
+  const start=nextDueISO(p);
+  const end=new Date(start.getTime()+15*60000);
+  const uid="plant-"+id+"-"+Date.now()+"@plant-tracker";
+  const ics=[
+    "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PlantTracker//HE","CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT","UID:"+uid,"DTSTAMP:"+icsStamp(new Date()),
+    "DTSTART:"+icsStamp(start),"DTEND:"+icsStamp(end),
+    "RRULE:FREQ=DAILY;INTERVAL="+p.interval,
+    "SUMMARY:💧 להשקות: "+p.name,
+    "DESCRIPTION:תזכורת השקיה כל "+p.interval+" ימים (מתוך אפליקציית הצמחים)",
+    "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:להשקות את "+p.name,"TRIGGER:PT0M","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"
+  ].join("\r\n");
+  const blob=new Blob([ics],{type:"text/calendar"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=(p.englishName||p.name).replace(/\s+/g,"_")+"_watering.ics";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("📅 נפתחת תזכורת ליומן");
 }
 
 render();
